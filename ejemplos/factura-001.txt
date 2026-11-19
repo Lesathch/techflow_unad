@@ -1,0 +1,4 @@
+FACTURA SIMULADA 001
+Proveedor: Ejemplo SAS
+Total: 250000 COP
+Uso exclusivo para pruebas académicas.

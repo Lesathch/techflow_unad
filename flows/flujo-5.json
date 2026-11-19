@@ -1,0 +1,188 @@
+{
+  "name": "TF 5 · Auditoría y reporte",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "techflow-stage-5",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "074e0832-4ee0-4d47-9bb9-9be6eecc8dd4",
+      "name": "Entrada etapa 5",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "a00a0bd3-b60f-4530-9234-46228d12e55b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://techflow:3000/api/integration/documents/stage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ id: $json.body.id, step: 5 }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c894411d-5695-4af8-99bb-a7252149774c",
+      "name": "Procesar etapa 5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18 * * *"
+            }
+          ]
+        }
+      },
+      "id": "936eca2b-5446-4f79-9fb7-5bcd8d681bcf",
+      "name": "Reporte diario 18h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://techflow:3000/api/integration/reports/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "614c6667-0ed1-471b-bd3a-71b6d30ae572",
+      "name": "Generar corte diario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        240
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://techflow:3000/api/integration/documents/error",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ id: $(\"Entrada etapa 5\").first().json.body.id, reason: \"Fallo en la etapa 5 de n8n; revisar ejecución\" }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "d66edb58-0c85-4098-9b12-ffceb1a373c2",
+      "name": "Enviar a revisión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Entrada etapa 5": {
+      "main": [
+        [
+          {
+            "node": "Procesar etapa 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reporte diario 18h": {
+      "main": [
+        [
+          {
+            "node": "Generar corte diario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar etapa 5": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Enviar a revisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/Bogota"
+  },
+  "pinData": {},
+  "tags": []
+}

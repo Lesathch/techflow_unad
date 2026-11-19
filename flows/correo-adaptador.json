@@ -1,0 +1,105 @@
+{
+  "name": "TF · Adaptador de recepción por correo IMAP",
+  "nodes": [
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "downloadAttachments": true,
+        "format": "resolved",
+        "options": {}
+      },
+      "id": "9ccd5f82-9282-4fd8-b98c-4b4ac3395b49",
+      "name": "Correo con adjuntos",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "imap": {
+          "id": "CONFIGURAR_IMAP",
+          "name": "Correo TechFlow"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = []; const items = $input.all(); for (let i=0;i<items.length;i++) { for (const key of Object.keys(items[i].binary || {})) { const file=items[i].binary[key]; if (!/\\.(txt|pdf)$/i.test(file.fileName || '')) continue; const bytes=await this.helpers.getBinaryDataBuffer(i,key); if (bytes.length > 1048576) throw new Error('Adjunto mayor de 1 MB'); output.push({json:{filename:file.fileName,content:bytes.toString('base64'),subject:items[i].json.subject || file.fileName,source:'correo'}}); } } return output;"
+      },
+      "id": "0a50eb31-39a3-4e6c-aa36-b3e68080e77b",
+      "name": "Preparar adjuntos TXT y PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n:5678/webhook/techflow-receive",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "ecb2fc8e-6a41-45f2-a9c4-50cf6d637fdb",
+      "name": "Recorrer cinco flujos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Correo con adjuntos": {
+      "main": [
+        [
+          {
+            "node": "Preparar adjuntos TXT y PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar adjuntos TXT y PDF": {
+      "main": [
+        [
+          {
+            "node": "Recorrer cinco flujos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/Bogota"
+  },
+  "pinData": {},
+  "tags": []
+}

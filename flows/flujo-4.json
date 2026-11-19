@@ -1,0 +1,126 @@
+{
+  "name": "TF 4 · Notificación",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "techflow-stage-4",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "aea8feec-9197-4519-8dea-53808d631f2a",
+      "name": "Entrada etapa 4",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "a9e9b7ad-cabe-4c57-bc35-65e05728c9c4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://techflow:3000/api/integration/documents/stage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ id: $json.body.id, step: 4 }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4d10e863-e06b-4441-9105-3ed5f63a32d0",
+      "name": "Procesar etapa 4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://techflow:3000/api/integration/documents/error",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ id: $(\"Entrada etapa 4\").first().json.body.id, reason: \"Fallo en la etapa 4 de n8n; revisar ejecución\" }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "90a24432-479c-463c-aa51-d73bc8dac369",
+      "name": "Enviar a revisión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        160
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "CONFIGURAR_CREDENCIAL",
+          "name": "TechFlow token"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Entrada etapa 4": {
+      "main": [
+        [
+          {
+            "node": "Procesar etapa 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar etapa 4": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Enviar a revisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "timezone": "America/Bogota"
+  },
+  "pinData": {},
+  "tags": []
+}

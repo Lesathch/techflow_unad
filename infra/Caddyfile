@@ -1,0 +1,8 @@
+techflow.localhost {
+ tls internal
+ reverse_proxy techflow:3000
+}
+n8n.localhost {
+ tls internal
+ reverse_proxy n8n:5678
+}
